@@ -1,0 +1,60 @@
+<html>
+  <head>
+    <!-- Moralis SDK code -->
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <script src="https://unpkg.com/moralis/dist/moralis.js"></script>
+  </head>
+  <body>
+    <h1>Project Eureka</h1>
+    <button id="btn-login">Wallet Login</button>
+    <button id="btn-logout">Logout</button>
+    <button id="btn-get-stats">Refresh Stats</button>
+    <ul id="recent-transactions"></ul>
+    <script>
+      // connect to Moralis server
+      Moralis.initialize("gsg6LyVdIRIP49LBa3DLXjH3PtrK7fNOcdpZZfPe");
+      Moralis.serverURL = "https://bljedkgxofes.usemoralis.com:2053/server";
+      async function login() {
+        let user = Moralis.User.current();
+        if (!user) {
+          user = await Moralis.authenticate();
+        }
+        console.log("logged in user:", user);
+      }
+      async function logOut() {
+        await Moralis.User.logOut();
+        console.log("logged out");
+      }
+
+      document.getElementById("btn-login").onclick = login;
+      document.getElementById("btn-logout").onclick = logOut;
+      document.getElementById("btn-get-stats").onclick = getStats;
+
+      function getStats() {
+        const user = Moralis.User.current();
+        if (user) {
+          getUserTransactions(user);
+        }
+      }
+
+      async function getUserTransactions(user) {
+        // create query
+        const query = new Moralis.Query("EthTransactions");
+        query.equalTo("from_address", user.get("ethAddress"));
+        // run query
+        const results = await query.find();
+        console.log("user transactions:", results);
+        const transactions = document.getElementById("recent-transactions");
+        results.forEach((transaction) => {
+          const transactionLi = document.createElement("li");
+          transactionLi.innerHTML =
+            "transaction: " + transaction.attributes.hash;
+          transactions.appendChild(transactionLi);
+        });
+      }
+
+      calculateGas();
+      getStats();
+    </script>
+  </body>
+</html>
